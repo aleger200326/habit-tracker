@@ -5,15 +5,15 @@ import { COLORS, completionRate, currentStreak, dateKey, isComplete, isScheduled
 type Page = 'dashboard' | 'habits' | 'analytics'
 type FormValues = Pick<Habit, 'name' | 'description' | 'color' | 'weekdays'>
 const emptyForm: FormValues = { name: '', description: '', color: COLORS[0], weekdays: [0, 1, 2, 3, 4, 5, 6] }
-const today = new Date()
-const todayKey = dateKey(today)
-const dateLabel = new Intl.DateTimeFormat('ru-RU', { weekday: 'long', day: 'numeric', month: 'long' }).format(today)
 
 function IconBadge({ color, children }: { color: string, children: React.ReactNode }) {
   return <span className="icon-badge" style={{ '--habit-color': color } as React.CSSProperties}>{children}</span>
 }
 
 function App() {
+  const [today, setToday] = useState(() => new Date())
+  const todayKey = dateKey(today)
+  const dateLabel = new Intl.DateTimeFormat('ru-RU', { weekday: 'long', day: 'numeric', month: 'long' }).format(today)
   const [habits, setHabits] = useState<Habit[]>(loadHabits)
   const [page, setPage] = useState<Page>('dashboard')
   const [isFormOpen, setFormOpen] = useState(false)
@@ -27,6 +27,13 @@ function App() {
   const [mobileMenu, setMobileMenu] = useState(false)
 
   useEffect(() => { saveHabits(habits) }, [habits])
+  useEffect(() => {
+    const timer = window.setInterval(() => {
+      const now = new Date()
+      if (dateKey(now) !== dateKey(today)) setToday(now)
+    }, 60_000)
+    return () => window.clearInterval(timer)
+  }, [today])
   useEffect(() => {
     if (!isFormOpen && !deleteTarget) return
     const onKey = (event: KeyboardEvent) => {
